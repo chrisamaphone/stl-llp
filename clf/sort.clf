@@ -1,0 +1,115 @@
+% LF portion (type & predicate definitions)
+nat : type.
+z : nat.
+s : nat -> nat.
+
+lt : nat -> nat -> type.
+lt/z : lt z (s N).
+lt/s : lt (s N) (s M)
+        <- lt N M.
+
+% array-like structure
+loc : type.
+
+% location adjacency
+adj : loc -> loc -> type.
+
+l1 : loc.
+l2 : loc.
+l3 : loc.
+adj12 : adj l1 l2.
+adj23 : adj l2 l3.
+
+% "at L N": the number N is at array location L
+at : loc -> nat -> type.
+
+% the one-line sorting program
+sort : at L E * adj L L' * at L' E' * lt E' E
+         -o {at L E' * at L' E}.
+
+% a test.
+n1 : nat = s z.
+n2 : nat = (s (s z)).
+n3 : nat = (s (s (s z))).
+
+init : type = 
+    {at l1 n3 * at l2 n2 * at l3 n1}.
+
+
+% trace beginning with context "init".
+% "trace n ty" runs the context forward starting seeded with "ty",
+% terminating after "n" steps ("*" is no bound).
+#trace * init.
+
+%% celf's output:
+% Trace * init
+% -- init lin
+% -- at l1 (s !(s !(s !z))) lin, at l2 (s !(s !z)) lin, at l3 (s !z) lin
+% -- at l1 (s !(s !(s !z))) lin, at l2 (s !z) lin, at l3 (s !(s !z)) lin
+% -- at l3 (s !(s !z)) lin, at l1 (s !z) lin, at l2 (s !(s !(s !z))) lin
+% -- at l1 (s !z) lin, at l2 (s !(s !z)) lin, at l3 (s !(s !(s !z))) lin
+% Success: 4 steps
+
+
+%%%% queries %%%%
+
+%% from "celf -hquery":
+% Query format:
+% #query d e l a ty.
+%  d  : bound on number of let-bindings before aborting
+%       forward-chaining, * means no bound
+%  e  : expected number of solutions, * means don't know
+%  l  : number of solutions to look for, * means infinite
+%  a  : number of times to execute the query
+%  ty : type to search for proof of
+
+% usually, i write queries of the form "#query * * * N ty"
+
+% the following query runs 10 iterations starting with init to quiescence,
+% expecting the stuff in {-} to be in the context afterwards (and failing
+% otherwise).
+
+#query * * * 4
+    init -o 
+    {at l1 N1 * at l2 N2 * at l3 N3}.
+
+
+%% celf's output:
+% 
+% Iteration 1
+% Solution: \X1. {
+%     let {[X2, [X3, X4]]} = X1 in 
+%     let {[X5, X6]} = sort [X2, [adj12, [X3, lt/s !(lt/s !lt/z)]]] in 
+%     let {[X7, X8]} = sort [X6, [adj23, [X4, lt/s !lt/z]]] in 
+%     let {[X9, X10]} = sort [X5, [adj12, [X7, lt/s !lt/z]]] in [X9, [X10, X8]]}
+%  #N1 = s !z
+%  #N2 = s !(s !z)
+%  #N3 = s !(s !(s !z))
+% Iteration 2
+% Solution: \X1. {
+%     let {[X2, [X3, X4]]} = X1 in 
+%     let {[X5, X6]} = sort [X2, [adj12, [X3, lt/s !(lt/s !lt/z)]]] in 
+%     let {[X7, X8]} = sort [X6, [adj23, [X4, lt/s !lt/z]]] in 
+%     let {[X9, X10]} = sort [X5, [adj12, [X7, lt/s !lt/z]]] in [X9, [X10, X8]]}
+%  #N1 = s !z
+%  #N2 = s !(s !z)
+%  #N3 = s !(s !(s !z))
+% Iteration 3
+% Solution: \X1. {
+%     let {[X2, [X3, X4]]} = X1 in 
+%     let {[X5, X6]} = sort [X2, [adj12, [X3, lt/s !(lt/s !lt/z)]]] in 
+%     let {[X7, X8]} = sort [X6, [adj23, [X4, lt/s !lt/z]]] in 
+%     let {[X9, X10]} = sort [X5, [adj12, [X7, lt/s !lt/z]]] in [X9, [X10, X8]]}
+%  #N1 = s !z
+%  #N2 = s !(s !z)
+%  #N3 = s !(s !(s !z))
+% Iteration 4
+% Solution: \X1. {
+%     let {[X2, [X3, X4]]} = X1 in 
+%     let {[X5, X6]} = sort [X2, [adj12, [X3, lt/s !(lt/s !lt/z)]]] in 
+%     let {[X7, X8]} = sort [X6, [adj23, [X4, lt/s !lt/z]]] in 
+%     let {[X9, X10]} = sort [X5, [adj12, [X7, lt/s !lt/z]]] in [X9, [X10, X8]]}
+%  #N1 = s !z
+%  #N2 = s !(s !z)
+%  #N3 = s !(s !(s !z))
+

@@ -1,0 +1,382 @@
+
+%% board squares.
+
+nat : type.
+z : nat.
+s : nat -> nat.
+
+
+r1 : nat = z.
+r2 : nat = (s z).
+r3 : nat = (s (s z)).
+r4 : nat = (s (s (s z))).
+r5 : nat = (s (s (s (s z)))).
+r6 : nat = (s (s (s (s (s z))))).
+r7 : nat = (s (s (s (s (s (s z)))))).
+r8 : nat = (s (s (s (s (s (s (s z))))))).
+
+a : nat = r1.
+b : nat = r2.
+c : nat = r3.
+d : nat = r4.
+e : nat = r5.
+f : nat = r6.
+g : nat = r7.
+h : nat = r8.
+
+pos : type.
+cel : Pi row:nat. Pi col:nat. pos.
+
+pawnstate : type.
+notmoved : pawnstate.
+moved : pawnstate.
+capturing : pawnstate.
+
+id : type.
+pawn1 : id.
+pawn2 : id.
+pawn3 : id.
+pawn4 : id.
+pawn5 : id.
+pawn6 : id.
+pawn7 : id.
+pawn8 : id.
+rook1 : id.
+rook2 : id.
+knight1 : id.
+knight2 : id.
+bishop1 : id.
+bishop2 : id.
+
+piece : type.
+king : piece.
+rook : id -> piece.
+knight : id -> piece.
+queen : piece.
+pawn : id -> pawnstate -> piece.
+bishop : id -> piece.
+
+color : type.
+black : color.
+white : color.
+
+inrange : nat -> type.
+inrange/0 : inrange r1.
+inrange/1 : inrange r2.
+inrange/2 : inrange r3.
+inrange/3 : inrange r4.
+inrange/4 : inrange r5.
+inrange/5 : inrange r6.
+inrange/6 : inrange r7.
+inrange/7 : inrange r8.
+
+dir : type.
+n : dir.
+so : dir.
+ea : dir.
+w : dir.
+ne : dir.
+sw : dir.
+nw : dir.
+se : dir.
+
+% accessibility
+acc : piece -> pos -> pos -> type.
+
+% immediate accessibility, tracking a direction
+acc_imm : piece -> pos -> pos -> dir -> type.
+
+% accessibility for pawns
+acc_pawn : pawnstate -> color -> pos -> pos -> type.
+
+% king movement rules.
+- : acc king (cel X Y) (cel (s X) Y)
+    <- inrange (s X)
+    <- inrange Y.
+- : acc king (cel X Y) (cel X (s Y))
+    <- inrange X
+    <- inrange (s Y).
+- : acc king (cel X Y) (cel (s X) (s Y))
+    <- inrange (s X)
+    <- inrange (s Y).
+- : acc king (cel (s X) Y) (cel X Y)
+    <- inrange (s X)
+    <- inrange Y.
+- : acc king (cel (s X) Y) (cel X (s Y))
+    <- inrange (s X)
+    <- inrange (s Y).
+- : acc king (cel X (s Y)) (cel X Y)
+    <- inrange X
+    <- inrange (s Y).
+- : acc king (cel X (s Y)) (cel (s X) Y)
+    <- inrange (s X)
+    <- inrange (s Y).
+- : acc king (cel (s X) (s Y)) (cel X Y)
+    <- inrange (s X)
+    <- inrange (s Y).
+
+% queen movement rules: similar to king but w/direction
+- : acc_imm queen (cel X Y) (cel (s X) Y) ea
+    <- inrange (s X)
+    <- inrange Y.
+- : acc_imm queen (cel X Y) (cel X (s Y)) n
+    <- inrange X
+    <- inrange (s Y).
+- : acc_imm queen (cel X Y) (cel (s X) (s Y)) ne
+    <- inrange (s X)
+    <- inrange (s Y).
+- : acc_imm queen (cel (s X) Y) (cel X Y) w
+    <- inrange (s X)
+    <- inrange Y.
+- : acc_imm queen (cel (s X) Y) (cel X (s Y)) nw
+    <- inrange (s X)
+    <- inrange (s Y).
+- : acc_imm queen (cel X (s Y)) (cel X Y) so
+    <- inrange X
+    <- inrange (s Y).
+- : acc_imm queen (cel X (s Y)) (cel (s X) Y) se
+    <- inrange (s X)
+    <- inrange (s Y).
+- : acc_imm queen (cel (s X) (s Y)) (cel X Y) sw
+    <- inrange (s X)
+    <- inrange (s Y).
+
+% pawn movement rules
+% "forward" is different depending on piece color...
+- : acc_pawn _ white (cel X Y) (cel X (s Y))
+     <- inrange X
+     <- inrange (s Y).
+
+- : acc_pawn notmoved white (cel X Y) (cel X (s (s Y)))
+     <- inrange (s (s Y))
+     <- inrange X.
+
+- : acc_pawn _ black (cel X (s Y)) (cel X Y)
+     <- inrange X
+     <- inrange (s Y).
+
+- : acc_pawn notmoved black (cel X (s (s Y))) (cel X Y)
+     <- inrange X
+     <- inrange (s (s Y)).
+
+- : acc_pawn capturing white (cel X Y) (cel (s X) (s Y))
+     <- inrange (s X)
+     <- inrange (s Y).
+
+- : acc_pawn capturing white (cel (s X) Y) (cel X (s Y))
+     <- inrange (s X)
+     <- inrange (s Y).
+
+- : acc_pawn capturing black (cel (s X) (s Y)) (cel X Y)
+     <- inrange (s X)
+     <- inrange (s Y).
+
+- : acc_pawn capturing black (cel X (s Y)) (cel (s X) Y)
+     <- inrange (s X)
+     <- inrange (s Y).
+
+%% rook, knight, bishop - TODO
+
+% cel states 
+empty : pos -> type.
+occ : pos -> piece -> color -> type.
+
+%% initial board.
+
+row8 : type = 
+{ occ (cel r8 a) (rook rook1) black
+* occ (cel r8 b) (knight knight1) black
+* occ (cel r8 c) (bishop bishop1) black
+* occ (cel r8 d) queen black
+* occ (cel r8 e) king black
+* occ (cel r8 f) (bishop bishop2) black
+* occ (cel r8 g) (knight knight2) black
+* occ (cel r8 h) (rook rook2) black 
+}.
+
+row7 : type = 
+{ occ (cel r7 a) (pawn pawn1 notmoved) black
+* occ (cel r7 b) (pawn pawn2 notmoved) black
+* occ (cel r7 c) (pawn pawn3 notmoved) black
+* occ (cel r7 d) (pawn pawn4 notmoved) black
+* occ (cel r7 e) (pawn pawn5 notmoved) black
+* occ (cel r7 f) (pawn pawn6 notmoved) black
+* occ (cel r7 g) (pawn pawn7 notmoved) black
+* occ (cel r7 g) (pawn pawn8 notmoved) black
+}.
+
+row6 : type =
+{ empty (cel r6 a)
+* empty (cel r6 b)
+* empty (cel r6 c)
+* empty (cel r6 d)
+* empty (cel r6 e)
+* empty (cel r6 f)
+* empty (cel r6 g)
+* empty (cel r6 h)
+}.
+
+row5 : type =
+{ empty (cel r5 a)
+* empty (cel r5 b)
+* empty (cel r5 c)
+* empty (cel r5 d)
+* empty (cel r5 e)
+* empty (cel r5 f)
+* empty (cel r5 g)
+* empty (cel r5 h)
+}.
+
+row4 : type =
+{ empty (cel r4 a)
+* empty (cel r4 b)
+* empty (cel r4 c)
+* empty (cel r4 d)
+* empty (cel r4 e)
+* empty (cel r4 f)
+* empty (cel r4 g)
+* empty (cel r4 h)
+}.
+
+row3 : type =
+{ empty (cel r3 a)
+* empty (cel r3 b)
+* empty (cel r3 c)
+* empty (cel r3 d)
+* empty (cel r3 e)
+* empty (cel r3 f)
+* empty (cel r3 g)
+* empty (cel r3 h)
+}.
+
+row2 : type = 
+{ occ (cel r2 a) (pawn pawn1 notmoved) white
+* occ (cel r2 b) (pawn pawn2 notmoved) white
+* occ (cel r2 c) (pawn pawn3 notmoved) white
+* occ (cel r2 d) (pawn pawn4 notmoved) white
+* occ (cel r2 e) (pawn pawn5 notmoved) white
+* occ (cel r2 f) (pawn pawn6 notmoved) white
+* occ (cel r2 g) (pawn pawn7 notmoved) white
+* occ (cel r2 g) (pawn pawn8 notmoved) white
+}.
+
+row1 : type = 
+{ occ (cel r1 a) (rook rook1) white
+* occ (cel r1 b) (knight knight1) white
+* occ (cel r1 c) (bishop bishop1) white
+* occ (cel r1 d) queen white
+* occ (cel r1 e) king white
+* occ (cel r1 f) (bishop bishop2) white
+* occ (cel r1 g) (knight knight2) white
+* occ (cel r1 h) (rook rook2) white 
+}.
+
+init_board : type =
+{ row1 * row2 * row3 * row4 * row5 * row6 * row7 * row8 }.
+
+% for turns
+opp : color -> color -> type.
+opp/bw : opp black white.
+opp/wb : opp white black.
+
+turn : color -> type.
+
+init_turn : type =
+{turn black}.
+
+captured : piece -> color -> type.
+
+%%%% game rules! %%%%
+
+% single space moves (king, knight)
+move_single : 
+  turn Color * acc Piece P P' * occ P Piece Color * opp Color Color'
+                * empty P' 
+          -o {occ P' Piece Color * empty P * turn Color'}.
+
+capture_single :
+  turn Color * acc Piece P P' * occ P Piece Color * opp Color Color'
+              * occ P Piece' Color'
+          -o {occ P' Piece Color * empty P * captured Piece' Color' 
+              * turn Color'}.
+
+% queen, bishop, rook: turn tokens
+moving : piece -> color -> dir -> type.
+
+commit : turn Color * acc_imm Piece P P' Dir * occ P Piece Color * empty P'
+                   -o {empty P * occ P' Piece Color * moving Piece Color Dir}.
+
+continue : moving Piece Color Dir * occ P Piece Color 
+                * acc_imm Piece P P' Dir * empty P'
+              -o {empty P * occ P' Piece Color * moving Piece Color Dir}.
+
+stop : moving Piece Color Dir * opp Color Color' -o {turn Color'}.
+
+capture_multi  : moving Piece Color Dir * occ P Piece Color 
+               * acc_imm Piece P P' Dir * opp Color Color'
+               * occ P' Piece' Color'
+              -o {empty P * occ P' Piece Color * captured Piece' Color'
+                  * turn Color'}.
+
+% pawn
+movepawn :
+  turn Color * occ P (pawn ID State) Color * acc_pawn State Color P P' 
+            * opp Color Color'
+               -o {occ P' (pawn ID moved) Color * empty P * turn Color'}.
+
+capturepawn :
+  turn Color * occ P (pawn ID State) Color * acc_pawn capturing Color P P'
+                * occ P' Piece Color' * opp Color Color' 
+              -o {occ P' (pawn ID moved) Color * captured Piece Color'
+                    * empty P * turn Color'}.
+
+
+% win condition (sort of).
+winner : color -> type.
+win : captured king Color * opp Color Color' * turn X -o {winner Color'}.
+
+#trace * {init_board * init_turn}.
+
+
+% .
+% .
+% .
+% .
+% .
+% .
+% .
+%% random stuff for testing/debugging %%
+% contents : type.
+% none : contents.
+% some : piece -> color -> contents.
+% 
+% list : type.
+% nil : list.
+% cons : contents -> list -> list.
+% 
+% collected_row : nat -> list -> type.
+% display_row : nat -> nat -> list -> type.
+% 
+% - : display_row R C L * empty (cel R C)
+%         -o {display_row R (s C) (cons none L)}.
+% 
+% - : display_row R C L * occ (cel R C) Piece Color
+%         -o {display_row R (s C) (cons (some Piece Color) L)}.
+% 
+% - : display_row R (s h) L -o {collected_row R L}.
+% 
+% init_collect : type = 
+%                    { display_row r1 a nil
+%                    * display_row r2 a nil
+%                    * display_row r3 a nil
+%                    * display_row r4 a nil
+%                    * display_row r5 a nil
+%                    * display_row r6 a nil
+%                    * display_row r7 a nil
+%                    * display_row r8 a nil
+%                    }.
+% 
+% 
+% #trace * {init_board * init_collect}.
+% 
+
