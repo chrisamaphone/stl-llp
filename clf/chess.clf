@@ -303,8 +303,8 @@ capture_single :
 % queen, bishop, rook: turn tokens
 moving : piece -> color -> dir -> type.
 
-commit : turn Color * acc_imm Piece P P' Dir * occ P Piece Color * empty P'
-                   -o {empty P * occ P' Piece Color * moving Piece Color Dir}.
+commit : turn Color * occ P Piece Color * acc_imm Piece P _ Dir
+                   -o {occ P Piece Color * moving Piece Color Dir}.
 
 continue : moving Piece Color Dir * occ P Piece Color 
                 * acc_imm Piece P P' Dir * empty P'
